@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CASCADE — Cross-System, Multi-Scale Single-Cell Foundation Model with Clinical Applications</title>
+  <meta name="description" content="CASCADE is a context-aware single-cell foundation model that links molecular variation to patient-level phenotypes across multiple diseases, outperforming baselines on 50 clinically relevant prediction tasks across 922 donors.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <style>
+    /* ─── Variables ─────────────────────────────────────── */
+    :root {
+      --teal-50:   #f0fdfa;
+      --teal-100:  #ccfbf1;
+      --teal-300:  #5eead4;
+      --teal-400:  #2dd4bf;
+      --teal-500:  #14b8a6;
+      --teal-600:  #0d9488;
+      --violet-300:#c4b5fd;
+      --violet-400:#a78bfa;
+      --violet-500:#8b5cf6;
+      --violet-600:#7c3aed;
+      --amber-400: #fbbf24;
+      --amber-500: #f59e0b;
+      --ink-50:  #f8fafc;
+      --ink-100: #f1f5f9;
+      --ink-200: #e2e8f0;
+      --ink-300: #cbd5e1;
+      --ink-400: #94a3b8;
+      --ink-500: #64748b;
+      --ink-600: #475569;
+      --ink-700: #334155;
+      --ink-800: #1e293b;
+      --ink-900: #0f172a;
+      --ink-950: #020617;
+      --font-display: 'Outfit', system-ui, sans-serif;
+      --font-body:    'Source Serif 4', Georgia, serif;
+      --font-mono:    'IBM Plex Mono', Menlo, monospace;
+    }
+
+    /* ─── Reset ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; scroll-padding-top: 5rem; }
+    body {
+      font-family: var(--font-body);
+      color: var(--ink-700);
+      background: white;
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.6;
+    }
+    h1,h2,h3,h4,h5,h6,nav,button { font-family: var(--font-display); }
+    a { color: inherit; text-decoration: none; }
+    img { display: block; max-width: 100%; height: auto; }
+    [id] { scroll-margin-top: 5rem; }
+    code {
+      font-family: var(--font-mono);
+      font-size: 0.85em;
+      background: var(--ink-100);
+      padding: 1px 5px;
+      border-radius: 3px;
+      color: var(--ink-700);
+    }
+
+    /* ─── Layout ─────────────────────────────────────────── */
+    .container {
+      width: 100%;
+      max-width: 80rem;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    /* ─── Section Label ──────────────────────────────────── */
+    .label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      border-radius: 9999px;
+      padding: 0.375rem 1rem;
+      font-family: var(--font-display);
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 1rem;
+    }
+    .label-teal   { background: rgba(20,184,166,.12); color: var(--teal-600);   border: 1px solid rgba(20,184,166,.22); }
+    .label-violet { background: rgba(139,92,246,.12); color: var(--violet-600); border: 1px solid rgba(139,92,246,.22); }
+    .label-amber  { background: rgba(245,158,11,.12); color: #92400e;           border: 1px solid rgba(245,158,11,.22); }
+    .label-white  { background: rgba(255,255,255,.1); color: rgba(255,255,255,.8); border: 1px solid rgba(255,255,255,.15); }
+    .label-ink    { background: rgba(30,41,59,.08);   color: var(--ink-600);    border: 1px solid rgba(30,41,59,.12); }
+
+    /* ─── Buttons ────────────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.5rem;
+      font-family: var(--font-display);
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+    .btn-primary { background: var(--teal-500); color: white; }
+    .btn-primary:hover { background: var(--teal-600); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(20,184,166,.35); }
+    .btn-ghost  { background: rgba(255,255,255,.08); color: rgba(255,255,255,.85); border: 1px solid rgba(255,255,255,.18); }
+    .btn-ghost:hover { background: rgba(255,255,255,.13); color: white; }
+    .btn-outline { background: transparent; color: var(--ink-700); border: 1px solid var(--ink-200); }
+    .btn-outline:hover { background: var(--ink-50); border-color: var(--ink-300); }
+
+    /* ─── Figure Frame ───────────────────────────────────── */
+    .fig {
+      overflow: hidden;
+      border-radius: 1rem;
+      border: 1px solid var(--ink-100);
+      background: white;
+      box-shadow: 0 1px 3px rgba(2,6,23,.05);
+      transition: all .3s;
+    }
+    .fig:hover { border-color: var(--ink-200); box-shadow: 0 6px 20px rgba(2,6,23,.07); }
+    .fig img { width: 100%; }
+    .fig-cap {
+      padding: .875rem 1.25rem;
+      font-family: var(--font-display);
+      font-size: .8125rem;
+      color: var(--ink-500);
+      border-top: 1px solid var(--ink-100);
+      line-height: 1.55;
+    }
+    .fig-cap strong { color: var(--ink-700); font-weight: 600; }
+
+    /* ─── Navigation ─────────────────────────────────────── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+      height: 4rem;
+      display: flex; align-items: center;
+      background: rgba(2,6,23,.82);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+    .nav-inner {
+      display: flex; align-items: center; justify-content: space-between;
+      width: 100%; max-width: 80rem; margin: 0 auto; padding: 0 1.5rem;
+    }
+    .nav-logo {
+      font-family: var(--font-display); font-weight: 800; font-size: 1.0625rem; color: white;
+    }
+    .nav-logo span {
+      background: linear-gradient(135deg, var(--teal-400) 30%, var(--violet-400));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .nav-links { display: flex; align-items: center; gap: .125rem; list-style: none; }
+    .nav-links a {
+      font-family: var(--font-display); font-size: .875rem; font-weight: 500;
+      color: rgba(255,255,255,.6); padding: .375rem .75rem; border-radius: .375rem;
+      transition: color .15s, background .15s;
+    }
+    .nav-links a:hover { color: white; background: rgba(255,255,255,.08); }
+
+    /* ─── Case Studies dropdown ──────────────────────────── */
+    .nav-dropdown { position: relative; }
+    .nav-dropdown > a { display: flex; align-items: center; gap: .3rem; cursor: pointer; }
+    .nav-dropdown > a::after {
+      content: '';
+      display: inline-block;
+      width: 0; height: 0;
+      border-left: 4px solid transparent;
+      border-right: 4px solid transparent;
+      border-top: 4.5px solid rgba(255,255,255,.5);
+      transition: transform .2s;
+    }
+    .nav-dropdown:hover > a::after,
+    .nav-dropdown:focus-within > a::after { transform: rotate(180deg); border-top-color: white; }
+    .nav-dropdown-menu {
+      display: none;
+      position: absolute; top: calc(100% + .5rem); left: 50%;
+      transform: translateX(-50%);
+      background: rgba(10,15,40,.96);
+      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: .625rem;
+      padding: .375rem;
+      min-width: 11rem;
+      z-index: 200;
+      box-shadow: 0 8px 28px rgba(0,0,0,.35);
+    }
+    .nav-dropdown:hover .nav-dropdown-menu,
+    .nav-dropdown:focus-within .nav-dropdown-menu { display: block; }
+    .nav-dropdown-menu a {
+      display: block; padding: .5rem .875rem; border-radius: .375rem;
+      color: rgba(255,255,255,.7); white-space: nowrap;
+      font-size: .8125rem;
+    }
+    .nav-dropdown-menu a:hover { color: white; background: rgba(255,255,255,.08); }
+
+    .nav-ctas { display: flex; gap: .5rem; }
+
+    /* ─── Hero ───────────────────────────────────────────── */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: var(--ink-950);
+      overflow: hidden;
+      padding: 8rem 1.5rem 5rem;
+    }
+    .hero-bg { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+    .blob {
+      position: absolute; border-radius: 50%; filter: blur(130px); opacity: .3;
+      animation: blobFloat 12s ease-in-out infinite;
+    }
+    .blob-1 { width: 550px; height: 550px; background: radial-gradient(circle, var(--teal-500), transparent 70%); top: -8%; left: 10%; animation-delay: 0s; }
+    .blob-2 { width: 480px; height: 480px; background: radial-gradient(circle, var(--violet-600), transparent 70%); top: 15%; right: 2%; animation-delay: -4s; }
+    .blob-3 { width: 380px; height: 380px; background: radial-gradient(circle, var(--amber-500), transparent 70%); bottom: 8%; left: 2%; opacity: .18; animation-delay: -8s; }
+    .hero-grain {
+      position: absolute; inset: 0; opacity: .03; pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 128px;
+    }
+    .hero-content {
+      position: relative; z-index: 10;
+      text-align: center; max-width: 58rem;
+      animation: fadeInUp .9s cubic-bezier(.16,1,.3,1);
+    }
+    .hero-title {
+      font-size: clamp(3.5rem, 9vw, 7rem); font-weight: 800;
+      letter-spacing: -.04em; line-height: 1;
+      background: linear-gradient(140deg, #fff 25%, var(--teal-300) 60%, var(--violet-300) 95%);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      margin-bottom: 1.25rem;
+    }
+    .hero-subtitle {
+      font-family: var(--font-display); font-size: clamp(.975rem, 2.2vw, 1.2rem);
+      font-weight: 500; color: rgba(255,255,255,.6); line-height: 1.55;
+      margin-bottom: 1.25rem;
+    }
+    .hero-desc {
+      font-size: 1.0625rem; color: rgba(255,255,255,.45); line-height: 1.75;
+      max-width: 43rem; margin: 0 auto 2.5rem;
+    }
+    .hero-btns { display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; margin-bottom: 3.5rem; }
+    .hero-authors { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; justify-content: center; margin-bottom: .625rem; }
+    .hero-author { font-family: var(--font-display); font-size: .875rem; color: rgba(255,255,255,.5); }
+    .hero-author a { color: var(--teal-400); text-decoration: underline; text-decoration-color: rgba(45,212,191,.35); }
+    .hero-affil { font-family: var(--font-display); font-size: .8125rem; color: rgba(255,255,255,.3); text-align: center; }
+    .hero-fig {
+      position: relative; z-index: 10;
+      margin-top: 3.5rem; max-width: 680px; width: 100%;
+      animation: floatSlow 9s ease-in-out infinite;
+    }
+    .hero-fig img { width: 100%; filter: drop-shadow(0 0 48px rgba(20,184,166,.18)); }
+
+    /* ─── Generic Section ────────────────────────────────── */
+    .sec { padding: 5.5rem 0; }
+    .sec-alt { background: var(--ink-50); }
+    .sec-dark { background: var(--ink-900); color: var(--ink-200); }
+    .sec-head { margin-bottom: 3.5rem; }
+    .sec-title {
+      font-size: clamp(1.75rem, 3.5vw, 2.4rem); font-weight: 700;
+      color: var(--ink-900); letter-spacing: -.025em; line-height: 1.25;
+      margin-bottom: .875rem;
+    }
+    .sec-dark .sec-title { color: white; }
+    .sec-lead { font-size: 1.0625rem; color: var(--ink-600); line-height: 1.8; max-width: 44rem; }
+    .sec-dark .sec-lead { color: var(--ink-300); }
+
+    /* ─── Overview cards ─────────────────────────────────── */
+    .cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-top: 2rem; }
+    .card {
+      background: white; border: 1px solid var(--ink-100); border-radius: 1rem;
+      padding: 1.75rem;
+      box-shadow: 0 1px 3px rgba(2,6,23,.04);
+      transition: all .3s;
+    }
+    .card:hover { box-shadow: 0 4px 16px rgba(2,6,23,.06); border-color: var(--ink-200); transform: translateY(-2px); }
+    .card-icon {
+      width: 2.375rem; height: 2.375rem; border-radius: .625rem;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.125rem; margin-bottom: .875rem;
+    }
+    .icon-teal   { background: rgba(20,184,166,.1);  }
+    .icon-violet { background: rgba(139,92,246,.1); }
+    .icon-amber  { background: rgba(245,158,11,.1); }
+    .icon-blue   { background: rgba(59,130,246,.1); }
+    .card-title { font-family: var(--font-display); font-size: 1.0625rem; font-weight: 600; color: var(--ink-800); margin-bottom: .5rem; }
+    .card-text  { font-size: .9375rem; color: var(--ink-600); line-height: 1.65; }
+
+    /* ─── Stats ──────────────────────────────────────────── */
+    .stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 1.25rem; margin-top: 3rem; }
+    .stat {
+      text-align: center; padding: 1.5rem 1rem;
+      border: 1px solid rgba(255,255,255,.07); border-radius: 1rem;
+      background: rgba(255,255,255,.04);
+    }
+    .stat-val {
+      font-family: var(--font-display); font-size: 2.25rem; font-weight: 800;
+      letter-spacing: -.04em; line-height: 1; margin-bottom: .5rem;
+      background: linear-gradient(135deg, var(--teal-300), var(--violet-300));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .stat-lbl { font-family: var(--font-display); font-size: .8125rem; color: rgba(255,255,255,.45); font-weight: 500; }
+
+    /* ─── Method steps ───────────────────────────────────── */
+    .steps { display: flex; flex-direction: column; gap: 1.25rem; }
+    .step { display: flex; gap: 1rem; }
+    .step-num {
+      flex-shrink: 0; width: 1.75rem; height: 1.75rem; border-radius: 50%;
+      background: var(--teal-500); color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-display); font-size: .8125rem; font-weight: 700;
+    }
+    .step-title { font-family: var(--font-display); font-size: .9375rem; font-weight: 600; color: var(--ink-800); margin-bottom: .25rem; }
+    .step-text  { font-size: .9rem; color: var(--ink-600); line-height: 1.65; }
+    .code-block {
+      margin-top: 1.75rem; background: var(--ink-50);
+      border: 1px solid var(--ink-200); border-radius: .75rem;
+      padding: 1.25rem; font-family: var(--font-mono); font-size: .8125rem;
+    }
+    .code-block .comment { color: var(--ink-400); margin-bottom: .5rem; }
+    .code-block .code    { color: var(--teal-600); font-weight: 500; }
+
+    /* ─── Result blocks ──────────────────────────────────── */
+    .result {
+      display: grid; grid-template-columns: 1fr 1.5fr; gap: 3rem; align-items: center;
+      padding: 4.5rem 0; border-bottom: 1px solid var(--ink-100);
+    }
+    .result:last-child { border-bottom: none; }
+    .result.flip { direction: rtl; }
+    .result.flip > * { direction: ltr; }
+    .result-title {
+      font-family: var(--font-display); font-size: 1.4375rem; font-weight: 700;
+      color: var(--ink-900); letter-spacing: -.02em; line-height: 1.3; margin-bottom: .875rem;
+    }
+    .result-body { font-size: .9875rem; color: var(--ink-600); line-height: 1.8; margin-bottom: 1rem; }
+    .chip {
+      display: inline-flex; align-items: center; gap: .5rem;
+      padding: .5rem .875rem; border-radius: .5rem; margin-top: .375rem;
+      font-family: var(--font-display); font-size: .8125rem; font-weight: 500;
+    }
+    .chip-teal   { background: var(--teal-50);            border: 1px solid rgba(20,184,166,.2); color: var(--teal-600); }
+    .chip-violet { background: rgba(139,92,246,.07);      border: 1px solid rgba(139,92,246,.2); color: var(--violet-600); }
+    .chip-amber  { background: rgba(245,158,11,.08);      border: 1px solid rgba(245,158,11,.2); color: #92400e; }
+
+    /* ─── Two / Three column grids ───────────────────────── */
+    .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    .g3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.5rem; }
+
+    /* ─── Citation ───────────────────────────────────────── */
+    .cite-box { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: 1rem; overflow: hidden; max-width: 56rem; margin: 0 auto; }
+    .cite-head { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,.08); }
+    .cite-lang { font-family: var(--font-mono); font-size: .75rem; color: var(--teal-400); }
+    .cite-copy {
+      font-family: var(--font-display); font-size: .75rem; color: rgba(255,255,255,.5);
+      background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); border-radius: .375rem;
+      padding: .375rem .75rem; cursor: pointer; transition: all .15s;
+    }
+    .cite-copy:hover { background: rgba(255,255,255,.1); color: white; }
+    .cite-body {
+      padding: 1.5rem; font-family: var(--font-mono); font-size: .8125rem;
+      color: var(--ink-300); line-height: 1.75; white-space: pre; overflow-x: auto;
+    }
+    .k { color: var(--teal-400); }
+    .v { color: rgba(255,255,255,.78); }
+    .br { color: var(--violet-300); }
+
+    /* ─── Reveal animations ──────────────────────────────── */
+    .reveal {
+      opacity: 0; transform: translateY(24px);
+      transition: opacity .8s cubic-bezier(.16,1,.3,1), transform .8s cubic-bezier(.16,1,.3,1);
+    }
+    .reveal.visible { opacity: 1; transform: none; }
+    .stagger > * {
+      opacity: 0; transform: translateY(20px);
+      transition: opacity .6s cubic-bezier(.16,1,.3,1), transform .6s cubic-bezier(.16,1,.3,1);
+    }
+    .stagger.visible > *:nth-child(1)  { opacity:1; transform:none; transition-delay:   0ms; }
+    .stagger.visible > *:nth-child(2)  { opacity:1; transform:none; transition-delay: 100ms; }
+    .stagger.visible > *:nth-child(3)  { opacity:1; transform:none; transition-delay: 200ms; }
+    .stagger.visible > *:nth-child(4)  { opacity:1; transform:none; transition-delay: 300ms; }
+    .stagger.visible > *:nth-child(5)  { opacity:1; transform:none; transition-delay: 400ms; }
+    .stagger.visible > *:nth-child(6)  { opacity:1; transform:none; transition-delay: 500ms; }
+    .stagger.visible > *:nth-child(7)  { opacity:1; transform:none; transition-delay: 600ms; }
+    .stagger.visible > *:nth-child(8)  { opacity:1; transform:none; transition-delay: 700ms; }
+    .stagger.visible > *:nth-child(9)  { opacity:1; transform:none; transition-delay: 800ms; }
+    .stagger.visible > *:nth-child(10) { opacity:1; transform:none; transition-delay: 900ms; }
+    .stagger.visible > *:nth-child(11) { opacity:1; transform:none; transition-delay:1000ms; }
+    .stagger.visible > *:nth-child(12) { opacity:1; transform:none; transition-delay:1100ms; }
+
+    /* ─── Keyframes ──────────────────────────────────────── */
+    @keyframes fadeInUp  { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:none; } }
+    @keyframes floatSlow { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-10px); } }
+    @keyframes blobFloat { 0%,100% { transform:scale(1) translate(0,0); } 50% { transform:scale(1.06) translate(10px,-12px); } }
+
+    /* ─── Team ───────────────────────────────────────────── */
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.5rem;
+      margin-top: 2.5rem;
+    }
+    .team-card {
+      display: flex; flex-direction: column; align-items: center; text-align: center;
+      padding: 1.75rem 1.25rem;
+      background: white; border: 1px solid var(--ink-100); border-radius: 1rem;
+      box-shadow: 0 1px 3px rgba(2,6,23,.04);
+      transition: all .3s;
+    }
+    .team-card:hover { box-shadow: 0 6px 20px rgba(2,6,23,.07); border-color: var(--ink-200); transform: translateY(-3px); }
+    .avatar {
+      width: 4rem; height: 4rem; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-display); font-size: .9375rem; font-weight: 700;
+      color: white; margin-bottom: 1rem; flex-shrink: 0;
+      object-fit: cover; /* works when avatar is an <img> */
+    }
+    .av-teal   { background: linear-gradient(135deg, var(--teal-400),   var(--teal-600)); }
+    .av-violet { background: linear-gradient(135deg, var(--violet-400), var(--violet-600)); }
+    .av-blue   { background: linear-gradient(135deg, #60a5fa, #2563eb); }
+    .av-amber  { background: linear-gradient(135deg, var(--amber-400),  #d97706); }
+    .av-rose   { background: linear-gradient(135deg, #fb7185, #e11d48); }
+    .av-cyan   { background: linear-gradient(135deg, #22d3ee, #0891b2); }
+    .team-name {
+      font-family: var(--font-display); font-size: .9375rem; font-weight: 600;
+      color: var(--ink-800); margin-bottom: .375rem; line-height: 1.3;
+    }
+    .team-affil {
+      font-family: var(--font-display); font-size: .75rem; color: var(--ink-500);
+      line-height: 1.4;
+    }
+    .team-affil a { color: var(--teal-600); text-decoration: none; }
+    .team-affil a:hover { text-decoration: underline; }
+    @media (max-width: 1024px) { .team-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 640px)  { .team-grid { grid-template-columns: repeat(2, 1fr); } }
+
+    /* ─── Collab banner ─────────────────────────────────── */
+    .collab-strip {
+      position: relative; z-index: 10;
+      margin-top: 2.75rem;
+      display: flex; flex-direction: column; align-items: center; gap: .875rem;
+    }
+    .collab-label {
+      font-family: var(--font-display); font-size: .7rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: .12em;
+      color: rgba(255,255,255,.35);
+    }
+    .collab-logos {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+      gap: 1.5rem 2.5rem;
+      background: rgba(255,255,255,.9);
+      border-radius: 1.25rem;
+      padding: 1.375rem 2.75rem;
+    }
+    .collab-logos img {
+      height: 2.75rem; width: auto; display: block;
+      opacity: .8;
+      transition: opacity .2s;
+    }
+    .collab-logos img:hover { opacity: 1; }
+
+    /* ─── Footer ─────────────────────────────────────────── */
+    footer {
+      background: var(--ink-950); border-top: 1px solid rgba(255,255,255,.06);
+      padding: 2rem 1.5rem; text-align: center;
+    }
+    footer p { font-family: var(--font-display); font-size: .875rem; color: rgba(255,255,255,.3); }
+    footer a { color: var(--teal-400); text-decoration: underline; text-decoration-color: rgba(45,212,191,.3); }
+
+    /* ─── Responsive ─────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .stats { grid-template-columns: repeat(2,1fr); }
+      .result, .result.flip { grid-template-columns: 1fr; gap: 2rem; direction: ltr; }
+      .g2 { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      .cards-grid { grid-template-columns: 1fr; }
+      .g3 { grid-template-columns: 1fr; }
+      .nav-links { display: none; }
+      .hero-btns { flex-direction: column; align-items: center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════ NAV ══════════════════ -->
+<nav>
+  <div class="nav-inner">
+    <div class="nav-logo"><span>CASCADE</span></div>
+    <ul class="nav-links">
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#method">Method</a></li>
+      <li><a href="#benchmarking">Benchmarking</a></li>
+      <li class="nav-dropdown">
+        <a href="#results">Case Studies</a>
+        <div class="nav-dropdown-menu">
+          <a href="#results">Alzheimer's Disease</a>
+          <a href="#huntington">Huntington's Disease</a>
+          <a href="#validation">Thyroid Perturbation</a>
+        </div>
+      </li>
+      <li><a href="#team">Team</a></li>
+      <li><a href="#citation">Cite</a></li>
+    </ul>
+    <div class="nav-ctas">
+      <a href="#" class="btn btn-ghost" style="padding:.5rem 1rem;font-size:.8125rem;">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="2" width="12" height="12" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M5 6h6M5 9h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Paper
+      </a>
+      <a href="#" class="btn btn-primary" style="padding:.5rem 1rem;font-size:.8125rem;">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        Code
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- ══════════════════ HERO ══════════════════ -->
+<section class="hero">
+  <div class="hero-bg">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+    <div class="hero-grain"></div>
+  </div>
+
+  <div class="hero-content">
+    <div style="margin-bottom:1.75rem;">
+      <span class="label label-white">Research Paper &nbsp;·&nbsp; 2026</span>
+    </div>
+
+    <h1 class="hero-title">CASCADE</h1>
+
+    <p class="hero-subtitle">
+      Cross-System, Multi-Scale Single-Cell Foundation Model<br>
+      with Clinical Applications
+    </p>
+
+    <p class="hero-desc">
+      A context-aware single-cell transformer that links molecular and cellular variation
+      to patient-level phenotypes across multiple diseases — outperforming all baselines
+      on 50 clinically relevant prediction tasks across 6.4 million cells from 922 donors.
+    </p>
+
+    <div class="hero-btns">
+      <a href="#" class="btn btn-primary">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M5 6h6M5 9h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Read Paper
+      </a>
+      <a href="#" class="btn btn-ghost">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub
+      </a>
+      <a href="#" class="btn btn-ghost" style="gap:.375rem;">
+        <svg width="18" height="17" viewBox="0 0 95 88" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill="#FFD21E" d="M47.21 76.5a34.75 34.75 0 1 0 0-69.5 34.75 34.75 0 0 0 0 69.5Z"/><path fill="#FF9D0B" d="M81.96 41.75a34.75 34.75 0 1 0-69.5 0 34.75 34.75 0 0 0 69.5 0Zm-73.5 0a38.75 38.75 0 1 1 77.5 0 38.75 38.75 0 0 1-77.5 0Z"/><path fill="#3A3B45" d="M58.5 32.3c1.28.44 1.78 3.06 3.07 2.38a5 5 0 1 0-6.76-2.07c.61 1.15 2.55-.72 3.7-.32ZM34.95 32.3c-1.28.44-1.79 3.06-3.07 2.38a5 5 0 1 1 6.76-2.07c-.61 1.15-2.56-.72-3.7-.32Z"/><path fill="#FF323D" d="M46.96 56.29c9.83 0 13-8.76 13-13.26 0-2.34-1.57-1.6-4.09-.36-2.33 1.15-5.46 2.74-8.9 2.74-7.19 0-13-6.88-13-2.38s3.16 13.26 13 13.26Z"/><path fill="#3A3B45" fill-rule="evenodd" d="M39.43 54a8.7 8.7 0 0 1 5.3-4.49c.4-.12.81.57 1.24 1.28.4.68.82 1.37 1.24 1.37.45 0 .9-.68 1.33-1.35.45-.7.89-1.38 1.32-1.25a8.61 8.61 0 0 1 5 4.17c3.73-2.94 5.1-7.74 5.1-10.7 0-2.34-1.57-1.6-4.09-.36l-.14.07c-2.31 1.15-5.39 2.67-8.77 2.67s-6.45-1.52-8.77-2.67c-2.6-1.29-4.23-2.1-4.23.29 0 3.05 1.46 8.06 5.47 10.97Z" clip-rule="evenodd"/><path fill="#FF9D0B" d="M70.71 37a3.25 3.25 0 1 0 0-6.5 3.25 3.25 0 0 0 0 6.5ZM24.21 37a3.25 3.25 0 1 0 0-6.5 3.25 3.25 0 0 0 0 6.5ZM17.52 48c-1.62 0-3.06.66-4.07 1.87a5.97 5.97 0 0 0-1.33 3.76 7.1 7.1 0 0 0-1.94-.3c-1.55 0-2.95.59-3.94 1.66a5.8 5.8 0 0 0-.8 7 5.3 5.3 0 0 0-1.79 2.82c-.24.9-.48 2.8.8 4.74a5.22 5.22 0 0 0-.37 5.02c1.02 2.32 3.57 4.14 8.52 6.1 3.07 1.22 5.89 2 5.91 2.01a44.33 44.33 0 0 0 10.93 1.6c5.86 0 10.05-1.8 12.46-5.34 3.88-5.69 3.33-10.9-1.7-15.92-2.77-2.78-4.62-6.87-5-7.77-.78-2.66-2.84-5.62-6.25-5.62a5.7 5.7 0 0 0-4.6 2.46c-1-1.26-1.98-2.25-2.86-2.82A7.4 7.4 0 0 0 17.52 48Zm0 4c.51 0 1.14.22 1.82.65 2.14 1.36 6.25 8.43 7.76 11.18.5.92 1.37 1.31 2.14 1.31 1.55 0 2.75-1.53.15-3.48-3.92-2.93-2.55-7.72-.68-8.01.08-.02.17-.02.24-.02 1.7 0 2.45 2.93 2.45 2.93s2.2 5.52 5.98 9.3c3.77 3.77 3.97 6.8 1.22 10.83-1.88 2.75-5.47 3.58-9.16 3.58-3.81 0-7.73-.9-9.92-1.46-.11-.03-13.45-3.8-11.76-7 .28-.54.75-.76 1.34-.76 2.38 0 6.7 3.54 8.57 3.54.41 0 .7-.17.83-.6.79-2.85-12.06-4.05-10.98-8.17.2-.73.71-1.02 1.44-1.02 3.14 0 10.2 5.53 11.68 5.53.11 0 .2-.03.24-.1.74-1.2.33-2.04-4.9-5.2-5.21-3.16-8.88-5.06-6.8-7.33.24-.26.58-.38 1-.38 3.17 0 10.66 6.82 10.66 6.82s2.02 2.1 3.25 2.1c.28 0 .52-.1.68-.38.86-1.46-8.06-8.22-8.56-11.01-.34-1.9.24-2.85 1.31-2.85Z"/><path fill="#FFD21E" d="M38.6 76.69c2.75-4.04 2.55-7.07-1.22-10.84-3.78-3.77-5.98-9.3-5.98-9.3s-.82-3.2-2.69-2.9c-1.87.3-3.24 5.08.68 8.01 3.91 2.93-.78 4.92-2.29 2.17-1.5-2.75-5.62-9.82-7.76-11.18-2.13-1.35-3.63-.6-3.13 2.2.5 2.79 9.43 9.55 8.56 11-.87 1.47-3.93-1.71-3.93-1.71s-9.57-8.71-11.66-6.44c-2.08 2.27 1.59 4.17 6.8 7.33 5.23 3.16 5.64 4 4.9 5.2-.75 1.2-12.28-8.53-13.36-4.4-1.08 4.11 11.77 5.3 10.98 8.15-.8 2.85-9.06-5.38-10.74-2.18-1.7 3.21 11.65 6.98 11.76 7.01 4.3 1.12 15.25 3.49 19.08-2.12Z"/><path fill="#FF9D0B" d="M77.4 48c1.62 0 3.07.66 4.07 1.87a5.97 5.97 0 0 1 1.33 3.76 7.1 7.1 0 0 1 1.95-.3c1.55 0 2.95.59 3.94 1.66a5.8 5.8 0 0 1 .8 7 5.3 5.3 0 0 1 1.78 2.82c.24.9.48 2.8-.8 4.74a5.22 5.22 0 0 1 .37 5.02c-1.02 2.32-3.57 4.14-8.51 6.1-3.08 1.22-5.9 2-5.92 2.01a44.33 44.33 0 0 1-10.93 1.6c-5.86 0-10.05-1.8-12.46-5.34-3.88-5.69-3.33-10.9 1.7-15.92 2.78-2.78 4.63-6.87 5.01-7.77.78-2.66 2.83-5.62 6.24-5.62a5.7 5.7 0 0 1 4.6 2.46c1-1.26 1.98-2.25 2.87-2.82A7.4 7.4 0 0 1 77.4 48Zm0 4c-.51 0-1.13.22-1.82.65-2.13 1.36-6.25 8.43-7.76 11.18a2.43 2.43 0 0 1-2.14 1.31c-1.54 0-2.75-1.53-.14-3.48 3.91-2.93 2.54-7.72.67-8.01a1.54 1.54 0 0 0-.24-.02c-1.7 0-2.45 2.93-2.45 2.93s-2.2 5.52-5.97 9.3c-3.78 3.77-3.98 6.8-1.22 10.83 1.87 2.75 5.47 3.58 9.15 3.58 3.82 0 7.73-.9 9.93-1.46.1-.03 13.45-3.8 11.76-7-.29-.54-.75-.76-1.34-.76-2.38 0-6.71 3.54-8.57 3.54-.42 0-.71-.17-.83-.6-.8-2.85 12.05-4.05 10.97-8.17-.19-.73-.7-1.02-1.44-1.02-3.14 0-10.2 5.53-11.68 5.53-.1 0-.19-.03-.23-.1-.74-1.2-.34-2.04 4.88-5.2 5.23-3.16 8.9-5.06 6.8-7.33-.23-.26-.57-.38-.98-.38-3.18 0-10.67 6.82-10.67 6.82s-2.02 2.1-3.24 2.1a.74.74 0 0 1-.68-.38c-.87-1.46 8.05-8.22 8.55-11.01.34-1.9-.24-2.85-1.31-2.85Z"/><path fill="#FFD21E" d="M56.33 76.69c-2.75-4.04-2.56-7.07 1.22-10.84 3.77-3.77 5.97-9.3 5.97-9.3s.82-3.2 2.7-2.9c1.86.3 3.23 5.08-.68 8.01-3.92 2.93.78 4.92 2.28 2.17 1.51-2.75 5.63-9.82 7.76-11.18 2.13-1.35 3.64-.6 3.13 2.2-.5 2.79-9.42 9.55-8.55 11 .86 1.47 3.92-1.71 3.92-1.71s9.58-8.71 11.66-6.44c2.08 2.27-1.58 4.17-6.8 7.33-5.23 3.16-5.63 4-4.9 5.2.75 1.2 12.28-8.53 13.36-4.4 1.08 4.11-11.76 5.3-10.97 8.15.8 2.85 9.05-5.38 10.74-2.18 1.69 3.21-11.65 6.98-11.76 7.01-4.31 1.12-15.26 3.49-19.08-2.12Z"/></svg>
+        HuggingFace
+      </a>
+    </div>
+
+    <div class="hero-authors">
+      <span class="hero-author">Valentina Giunchiglia</span>
+      <span class="hero-author">Owen Queen</span>
+      <span class="hero-author">Xiang Lin</span>
+      <span class="hero-author">Zaneta Matuszek</span>
+      <span class="hero-author">Daniel Hochbaum</span>
+      <span class="hero-author">Aarthi Venkat</span>
+      <span class="hero-author">Gianmarco Abbadessa</span>
+      <span class="hero-author">Walker Rickord</span>
+      <span class="hero-author">Richard Nicholas</span>
+      <span class="hero-author">Paola Arlotta</span>
+      <span class="hero-author">Marinka Zitnik</span>
+      <span class="hero-author">Michelle Li</span>
+    </div>
+  </div>
+
+  <div class="collab-strip">
+    <div class="collab-label">In collaboration with</div>
+    <div class="collab-logos">
+      <img src="logos/Harvard_University_logo.svg.png"       alt="Harvard University">
+      <img src="logos/Medical_Research_Council_logo.svg.png" alt="Medical Research Council">
+      <img src="logos/brad.png"                              alt="Broad Institute">
+      <img src="logos/Imperial_College_London_new_logo.png"   alt="Imperial College London" style="height:1.75rem;">
+      <img src="logos/kcl.png"                               alt="King's College London">
+      <img src="logos/stanford-university.png"               alt="Stanford University" style="height:3.5rem;">
+    </div>
+  </div>
+
+
+</section>
+
+<!-- ══════════════════ OVERVIEW ══════════════════ -->
+<section class="sec" id="overview">
+  <div class="container">
+    <div class="sec-head reveal">
+      <span class="label label-teal">Overview</span>
+      <h2 class="sec-title">Context-aware single-cell modelling<br>across diseases and scales</h2>
+      <p class="sec-lead" style="max-width:none;">
+        CASCADE learns context-dependent representations across disease, tissue, cell type, and treatment axes,
+        connecting molecular variation at the single-cell level to multiscale biological and clinical phenotypes —
+        from neuropathological staging to treatment response and patient stratification.
+      </p>
+    </div>
+
+    <div class="fig reveal" style="margin-bottom:2.5rem;">
+      <img src="figures/figure1-1.png" alt="CASCADE — context-aware single-cell modelling overview" style="width:100%;">
+    </div>
+
+    <div class="cards-grid stagger">
+      <div class="card">
+        <div class="card-icon icon-teal">🧬</div>
+        <div class="card-title">Context-Aware Tokenisation</div>
+        <p class="card-text">
+          Each cell is encoded as context-dependent up- and down-regulated genes relative to a
+          biologically defined reference group — producing multiple representations of the same cell
+          across disease, tissue, cell type, and treatment axes.
+        </p>
+      </div>
+      <div class="card">
+        <div class="card-icon icon-violet">⚡</div>
+        <div class="card-title">50 Clinical Prediction Tasks</div>
+        <p class="card-text">
+          Benchmarked across 10 biological and clinical domains spanning neuropathology, genomics,
+          cognition, outcomes, and diagnosis — ranking first in 90.9% of clinical-domain comparisons
+          with a mean improvement of +0.194 over the strongest baseline.
+        </p>
+      </div>
+      <div class="card">
+        <div class="card-icon icon-amber">📊</div>
+        <div class="card-title">Multi-Disease Scope</div>
+        <p class="card-text">
+          Pre-trained on six disease-specific cohorts spanning Alzheimer's disease, Huntington's disease,
+          lung cancer, lung conditions, autism, and thyroid hormone perturbation —
+          6.4 million cells from 922 donors.
+        </p>
+      </div>
+      <div class="card">
+        <div class="card-icon icon-blue">🔬</div>
+        <div class="card-title">Biological Explainability</div>
+        <p class="card-text">
+          CASCADE-Explainer identifies cell-type and gene-level drivers of patient predictions.
+          Validated against LLM-based literature rankings (Spearman ρ = 0.964) and
+          AD GWAS-eQTL colocalisation across four independent genetic studies.
+        </p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════ DATASET (dark) ══════════════════ -->
+<section class="sec sec-dark" id="dataset">
+  <div class="container">
+    <div class="sec-head reveal" style="text-align:center;">
+      <span class="label label-white">Dataset</span>
+      <h2 class="sec-title">Six disease-specific cohorts</h2>
+      <p class="sec-lead" style="margin:0 auto;text-align:center;">
+        CASCADE is pre-trained and evaluated on large-scale single-cell datasets spanning
+        neurodegenerative disease, cancer, and treatment perturbation.
+      </p>
+    </div>
+
+    <div class="stats stagger">
+      <div class="stat"><div class="stat-val">6.4M+</div><div class="stat-lbl">Total cells</div></div>
+      <div class="stat"><div class="stat-val">922</div><div class="stat-lbl">Donors</div></div>
+      <div class="stat"><div class="stat-val">50</div><div class="stat-lbl">Prediction tasks</div></div>
+      <div class="stat"><div class="stat-val">6</div><div class="stat-lbl">Disease cohorts</div></div>
+    </div>
+
+    <div class="reveal" style="margin-top:2.5rem;text-align:center;">
+      <div style="display:flex;flex-wrap:wrap;gap:.5rem .875rem;justify-content:center;">
+        <span style="font-family:var(--font-display);font-size:.875rem;color:rgba(255,255,255,.45);">Cohorts:</span>
+        <span style="font-family:var(--font-display);font-size:.875rem;color:var(--teal-400);font-weight:600;">Alzheimer's Disease</span>
+        <span style="color:rgba(255,255,255,.25);">·</span>
+        <span style="font-family:var(--font-display);font-size:.875rem;color:var(--teal-400);font-weight:600;">Huntington's Disease</span>
+        <span style="color:rgba(255,255,255,.25);">·</span>
+        <span style="font-family:var(--font-display);font-size:.875rem;color:var(--teal-400);font-weight:600;">Lung Cancer</span>
+        <span style="color:rgba(255,255,255,.25);">·</span>
+        <span style="font-family:var(--font-display);font-size:.875rem;color:var(--teal-400);font-weight:600;">Lung Conditions</span>
+        <span style="color:rgba(255,255,255,.25);">·</span>
+        <span style="font-family:var(--font-display);font-size:.875rem;color:var(--teal-400);font-weight:600;">Autism</span>
+        <span style="color:rgba(255,255,255,.25);">·</span>
+        <span style="font-family:var(--font-display);font-size:.875rem;color:var(--teal-400);font-weight:600;">Thyroid Perturbation</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ METHOD ══════════════════ -->
+<section class="sec sec-alt" id="method">
+  <div class="container">
+    <div class="sec-head reveal">
+      <span class="label label-violet">Architecture</span>
+      <h2 class="sec-title">Three modules bridging cells<br>to patient phenotypes</h2>
+      <p class="sec-lead" style="max-width:none;">
+        CASCADE integrates contextual information into both input representation and pre-training objectives,
+        allowing the same cell to be interpreted through multiple biologically meaningful axes and
+        enabling patient-level phenotype prediction from single-cell profiles.
+      </p>
+    </div>
+
+    <div class="reveal">
+      <div class="g3" style="gap:2rem;margin-bottom:2rem;">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div>
+            <div class="step-title">Context-aware tokenisation</div>
+            <p class="step-text">Each cell is encoded as context-dependent up- and down-regulated genes relative to a biologically defined reference group, producing multiple representations per cell across disease, tissue, cell type, and treatment contexts.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div>
+            <div class="step-title">Context-specific representation learning</div>
+            <p class="step-text">Shared cell embeddings are projected through separate context-specific projectors (disease, tissue, cell type, treatment), learning how molecular programmes vary across biologically meaningful contexts via contrastive objectives.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div>
+            <div class="step-title">Patient representation &amp; explainability</div>
+            <p class="step-text">Cell-level embeddings are aggregated across all cells from a donor to produce a patient-level representation for multiscale phenotype prediction. CASCADE-Explainer identifies the cell types and genes most responsible for each prediction.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="fig">
+        <img src="figures/figure1-1b.png" alt="CASCADE architecture" style="width:100%;">
+        <div class="fig-cap">
+          <strong>Figure 1c.</strong> CASCADE architecture: context-aware tokenisation module,
+          context-specific projectors (cell type, tissue, disease, treatment), patient representation
+          module, and explainability module.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ BENCHMARKING ══════════════════ -->
+<section class="sec sec-alt" id="benchmarking">
+  <div class="container">
+    <div class="sec-head reveal">
+      <span class="label label-teal">Benchmarking</span>
+      <h2 class="sec-title">State-of-the-art across 50<br>clinical prediction tasks</h2>
+      <p class="sec-lead" style="max-width:none;">
+        CASCADE was benchmarked against eight baselines — Geneformer, scGPT, scVI, UCE, PaScient, mcBERT,
+        a linear cross-attention model, and a majority-class baseline — across 50 supervised prediction tasks
+        organised into 10 biological and clinical domains. CASCADE ranked first in 90.9% of clinical-domain
+        comparisons, with a mean improvement of +0.194 over the strongest per-task baseline. The largest gains
+        were in Neuropathology &amp; Pathological Staging, Cognitive &amp; Functional Scales, and
+        Outcomes &amp; Cause of Death, where CASCADE ranked first on every task.
+      </p>
+    </div>
+
+    <div class="reveal" style="margin-bottom:2rem;">
+      <div style="display:flex;flex-wrap:wrap;gap:.5rem;">
+        <span class="chip chip-teal">Ranked 1st in 90.9% of clinical-domain comparisons</span>
+        <span class="chip chip-violet">Mean improvement +0.194 over strongest per-task baseline</span>
+        <span class="chip chip-amber">50 tasks across 4 disease cohorts &nbsp;·&nbsp; 922 donors</span>
+      </div>
+    </div>
+
+    <div class="fig reveal">
+      <img src="figures/bench_hires-1.png" alt="CASCADE benchmarking across 50 prediction tasks" style="width:100%;">
+      <div class="fig-cap">
+        <strong>Figure 2.</strong> Benchmarking of CASCADE across 50 clinically relevant prediction tasks.
+        <em>Top:</em> Multi-context shared embedding space — UMAPs coloured by disease, cell-type, and tissue context.
+        <em>Bottom:</em> F1 scores per task domain across four cohorts (HLCA, LUCA, SEATTLE, AUTISM),
+        compared against eight baselines.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ RESULTS ══════════════════ -->
+<section class="sec" id="results">
+  <div class="container">
+    <div class="sec-head reveal">
+      <span class="label label-violet">Alzheimer's Disease</span>
+      <h2 class="sec-title">CASCADE-Explainer identifies cell-type<br>drivers of Alzheimer's disease</h2>
+      <p class="sec-lead" style="max-width:none;">
+        CASCADE-Explainer derives donor-specific cell-type and gene-level importance scores from AD status
+        prediction, validated against two independent external benchmarks: a genetic benchmark based on
+        eQTL colocalisation with GWAS loci, and an LLM-arena adjudicating pairwise cell-type comparisons
+        against AD literature. These validations confirm that CASCADE-Explainer captures biologically
+        meaningful disease-relevant signals rather than statistical artefacts.
+      </p>
+    </div>
+
+    <!-- R1a: AD GWAS + LLM validation -->
+    <div class="result reveal">
+      <div>
+        <span class="label label-violet">Alzheimer's Disease — Explainer Validation</span>
+        <h3 class="result-title">Cell-type importance rankings align with GWAS and literature evidence</h3>
+        <p class="result-body">
+          To assess biological validity, CASCADE-Explainer cell-type importance scores derived from
+          AD status prediction were compared against two independent external benchmarks.
+          The first was an LLM-as-a-judge arena, where pairwise cell-type comparisons were adjudicated
+          using an AD-focused literature report and aggregated into Elo-based rankings —
+          CASCADE-Explainer correlated strongly at coarse resolution (Spearman ρ = 0.964, p = 0.0005)
+          and significantly at granular resolution (ρ = 0.645, p = 0.032).
+          The second was a genetic benchmark based on cell-type-resolved eQTL colocalisation with
+          AD GWAS loci from four independent studies. Positive correlations were observed across all
+          four sources at granular resolution (Bellenguez ρ = 0.387, Jansen ρ = 0.453,
+          Kunkle ρ = 0.567, Marioni ρ = 0.629), strengthening further at coarse resolution
+          (Marioni ρ = 0.775, p = 0.041; Kunkle ρ = 0.764, p = 0.046).
+        </p>
+        <div style="display:flex;flex-direction:column;gap:.5rem;">
+          <span class="chip chip-violet">LLM-arena: ρ = 0.964 &nbsp;(p = 0.0005, coarse cell types)</span>
+          <span class="chip chip-teal">eQTL concordance significant across 4 independent AD GWAS studies</span>
+        </div>
+      </div>
+      <div class="fig">
+        <img src="figures/bench-explainer-1.png" alt="CASCADE-Explainer AD validation — GWAS and LLM benchmarking" style="width:100%;">
+        <div class="fig-cap">
+          <strong>Figure 3a–e.</strong> Orthogonal benchmarking of CASCADE-Explainer cell-type importance scores.
+          <em>a)</em> Evaluation design: eQTL colocalisation (genetic) and LLM-arena (literature-based).
+          <em>b–c)</em> LLM-arena concordance at granular and coarse cell-type resolution.
+          <em>d–e)</em> eQTL colocalisation concordance at granular and coarse resolution.
+        </div>
+      </div>
+    </div>
+
+    <!-- R1b: AD gene programme recovery -->
+    <div class="result flip reveal">
+      <div>
+        <span class="label label-violet">Alzheimer's Disease — Gene Programmes</span>
+        <h3 class="result-title">CASCADE-Explainer recovers canonical cell-type marker programmes</h3>
+        <p class="result-body">
+          To evaluate gene-level explainability, CASCADE-Explainer was applied to healthy AD donors
+          for a cell-type annotation task and benchmarked against in-house single-nucleus marker programmes
+          (Imperial College London) and literature-derived signatures (Kaufmann et al.).
+          CASCADE-Explainer achieved strong and significant recovery for five non-neuronal cell types —
+          astrocytes, endothelial cells, microglia, OPCs, and oligodendrocytes —
+          with AUROCs ranging from 0.682 to 0.952 (permutation p &lt; 0.001 for all five), using both reference sets.
+          Critically, raw attention weights were near-random (AUROC 0.441–0.570) across all comparisons,
+          confirming that the perturbation-based explainer — not attention alone — drives biologically
+          meaningful gene-level signals.
+        </p>
+        <div style="display:flex;flex-direction:column;gap:.5rem;">
+          <span class="chip chip-violet">AUROC 0.682–0.952 across 5 non-neuronal cell types &nbsp;(p &lt; 0.001)</span>
+          <span class="chip chip-teal">Replicated across in-house and literature reference sets</span>
+          <span class="chip chip-amber">Attention baseline near-random (AUROC 0.441–0.570)</span>
+        </div>
+      </div>
+      <div class="fig">
+        <img src="figures/gene-programmes-1.png" alt="CASCADE-Explainer gene programme recovery" style="width:100%;">
+        <div class="fig-cap">
+          <strong>Figure 3f.</strong> Gene programme recovery AUROCs per cell type (Astrocytes, Endothelial,
+          IO neurons, Microglia, OPCs, Oligodendrocytes). Bars show CASCADE-Explainer, attention baseline,
+          and DE baseline against in-house and literature reference marker sets.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════ HUNTINGTON ══════════════════ -->
+<section class="sec" id="huntington">
+  <div class="container">
+    <div class="sec-head reveal">
+      <span class="label label-amber">Huntington's Disease</span>
+      <h2 class="sec-title">CASCADE predicts neuropathological<br>severity and enables patient stratification</h2>
+      <p class="sec-lead" style="max-width:none;">
+        CASCADE-HD was pre-trained on snRNA-seq data from Huntington's disease cases and healthy controls,
+        then fine-tuned to predict Vonsattel (VS) neuropathological grade, pathogenic CAG repeat length,
+        and benign CAG repeat length — substantially outperforming a regularised linear baseline.
+        CASCADE-Explainer links cell-type programmes to disease severity and enables molecular patient stratification.
+      </p>
+    </div>
+
+    <!-- Overview figure — full width -->
+    <div class="reveal" style="margin-bottom:3rem;">
+      <div class="fig">
+        <img src="figures/hd-overview.png" alt="CASCADE-HD overview pipeline" style="width:100%;border-radius:.75rem;">
+        <div class="fig-cap">
+          CASCADE-HD: patient representations from Huntington's disease and healthy single-cell data
+          are used to predict benign CAG, pathogenic CAG, and VS grade, with donor-level cell-type importance
+          driving patient clustering into clinically distinct subgroups.
+        </div>
+      </div>
+    </div>
+
+    <!-- VS Grade + SPN -->
+    <div class="result reveal">
+      <div>
+        <span class="label label-amber">Cell-Type Importance by VS Grade</span>
+        <h3 class="result-title">SPN importance tracks neuropathological severity monotonically</h3>
+        <p class="result-body">
+          CASCADE-Explainer was applied to 53 healthy controls and 41 HD donors across seven major brain
+          cell populations. A clear stage-dependent pattern emerged: spiny projection neuron (SPN) importance
+          increases monotonically from healthy controls through VS Grade 4, reaching its global maximum at
+          the most severe stage. In contrast, microglia show the highest importance in healthy tissue and
+          decline with disease progression. Interneurons peak earliest (VS Grade 1), astrocytes at
+          VS Grade 2, and microglia, oligodendrocytes, and OPCs at VS Grade 3. Endothelial and SPN signals
+          co-peak at VS Grade 4, suggesting that vascular and SPN-associated programmes become most relevant
+          in end-stage neuropathology. These patterns were not driven by cell abundance, confirming that
+          CASCADE-Explainer captures disease-relevant biological variation.
+        </p>
+        <div style="display:flex;flex-direction:column;gap:.5rem;">
+          <span class="chip chip-amber">VS Grade: r = 0.863, R² = 0.611</span>
+          <span class="chip chip-amber">Pathogenic CAG: r = 0.599 &nbsp;·&nbsp; Benign CAG: r = 0.502</span>
+          <span class="chip chip-teal">SPN importance increases monotonically from healthy → VS Grade 4</span>
+          <span class="chip chip-teal">Microglia show strongest negative association with VS grade (ρ = −0.824)</span>
+        </div>
+      </div>
+      <div class="fig">
+        <img src="figures/hd-vsgrade.png" alt="Cell-type importance by VS grade — SPN and non-neuronal patterns" style="width:100%;border-radius:.75rem;">
+        <div class="fig-cap">
+          <strong>Left:</strong> Observed correlations between predicted HD phenotypes (VS grade, benign and pathogenic CAG)
+          and their Δ biological and model validity. <strong>Right:</strong> Cohort-level cell-type importance
+          across neuropathological severity stages, showing SPN monotonic increase and non-neuronal cell-type peaks.
+        </div>
+      </div>
+    </div>
+
+    <!-- Clustering -->
+    <div class="result flip reveal">
+      <div>
+        <span class="label label-amber">Patient Stratification</span>
+        <h3 class="result-title">Cell-type importance profiles stratify patients into clinically distinct clusters</h3>
+        <p class="result-body">
+          Donor-level cell-type importance profiles from CASCADE-Explainer were used to cluster HD patients
+          in both the benign and pathogenic CAG prediction settings. In both cases, two clusters emerged.
+          In the <strong>benign CAG</strong> setting, one cluster (N = 22) showed elevated SPN importance
+          and higher VS grade (mean 3.00 vs 1.50), with younger age at death (55.5 vs 66.3 years) and
+          earlier cognitive onset (32.9 vs 57.9 years). The second cluster (N = 28) showed broader non-SPN
+          contributions from microglia, oligodendroglia, and endothelial cells.
+          In the <strong>pathogenic CAG</strong> setting, the SPN-dominant cluster (N = 37) had longer
+          repeat expansions (mean 46.0 vs 39.8 repeats), higher VS grade, and earlier motor onset (40.4 vs 67.2 years).
+          The benign CAG model captured disease-relevant cellular variability even though benign CAG length
+          itself was not correlated with VS grade, suggesting CASCADE-Explainer identifies non-linear
+          pathology-associated programmes beyond phenotype correlation.
+        </p>
+        <div style="display:flex;flex-direction:column;gap:.5rem;">
+          <span class="chip chip-amber">Benign CAG: 2 clusters (silhouette = 0.325), VS grade 3.00 vs 1.50</span>
+          <span class="chip chip-amber">Pathogenic CAG: 2 clusters (silhouette = 0.588), motor onset 40 vs 67 yrs</span>
+          <span class="chip chip-teal">Clusters validated against age at death, motor and cognitive onset</span>
+        </div>
+      </div>
+      <div class="fig">
+        <img src="figures/hd-clustering.png" alt="HD patient clustering by cell-type importance profiles" style="width:100%;border-radius:.75rem;">
+        <div class="fig-cap">
+          <strong>Panels d–g.</strong> Donor-level cell-type importance for benign and pathogenic CAG predictions:
+          forest plots of clinical correlations (d), heatmaps of donor variability per cluster (e),
+          mean VS grade per cluster (f), and pairwise cell-type weight matrices within and between clusters (g).
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════ VALIDATION ══════════════════ -->
+<section class="sec sec-alt" id="validation">
+  <div class="container">
+    <div class="sec-head reveal">
+      <span class="label label-violet">Thyroid Perturbation</span>
+      <h2 class="sec-title">CASCADE-Explainer recovers<br>thyroid hormone gene signatures</h2>
+      <p class="sec-lead" style="max-width:none;">
+        CASCADE-thyroid was pre-trained on mouse cortical scRNA-seq data spanning T3-treated and untreated
+        conditions and wild-type versus dominant-negative thyroid hormone receptor (DN-THRα) perturbations,
+        using cell type and treatment as biological contexts. CASCADE-Explainer was then used to derive
+        gene importance rankings and benchmarked against four curated external reference gene sets spanning
+        transcriptional response and receptor-regulatory biology.
+      </p>
+    </div>
+
+    <!-- Overview figure — full width -->
+    <div class="reveal" style="margin-bottom:3rem;">
+      <div class="fig">
+        <img src="figures/thyroid-overview.png" alt="CASCADE-thyroid benchmark overview" style="width:100%;border-radius:.75rem;">
+        <div class="fig-cap">
+          Benchmark design: CASCADE-Explainer gene rankings compared against matched DE rankings across
+          two tasks (thyroid hormone treatment; DN-THRα receptor prediction) and four reference gene sets
+          (specific TH-responsive, broad TH-responsive, proximal THR binding sites, DN-THRα de-repressed).
+        </div>
+      </div>
+    </div>
+
+    <!-- Aggregation benchmark + cell-type AUROC -->
+    <div class="result reveal">
+      <div>
+        <span class="label label-violet">Prediction Performance</span>
+        <h3 class="result-title">CASCADE recovers cell-type-specific thyroid hormone programmes</h3>
+        <p class="result-body">
+          For the treatment task, CASCADE achieved F1 = 0.97 and AUROC = 0.99 (cell-type context) and
+          F1 = 1.00, AUROC = 1.00 (treatment context). For the DN-THRα receptor task, CASCADE achieved
+          F1 = 0.78, AUROC = 0.86 (cell-type context) and F1 = 0.70, AUROC = 0.79 (treatment context).
+          At the cell-type level, CASCADE-Explainer outperformed the differential expression baseline for
+          both astrocytes (AUROC 0.706 vs 0.530, Δ+0.176) and glutamatergic neurons (0.679 vs 0.616,
+          Δ+0.063). The advantage for astrocytes was robust across all aggregation methods tested,
+          reaching a maximum AUROC of 0.745.
+        </p>
+        <div style="display:flex;flex-direction:column;gap:.5rem;">
+          <span class="chip chip-violet">Treatment task: AUROC = 0.99–1.00</span>
+          <span class="chip chip-violet">Receptor task: AUROC = 0.79–0.86</span>
+          <span class="chip chip-teal">Astrocytes: CASCADE 0.706 vs DE 0.530 (Δ+0.176)</span>
+          <span class="chip chip-teal">Glutamatergic neurons: CASCADE 0.679 vs DE 0.616 (Δ+0.063)</span>
+        </div>
+      </div>
+      <div class="fig">
+        <img src="figures/thyroid-benchmark.png" alt="Aggregation method benchmark and cell-type AUROC" style="width:100%;border-radius:.75rem;">
+        <div class="fig-cap">
+          <strong>b.</strong> Aggregation method benchmark — median AUROC across all task–perturbation–reference combinations.
+          <strong>c.</strong> Cell-type-specific AUROC for CASCADE vs DE in astrocytes and glutamatergic neurons.
+        </div>
+      </div>
+    </div>
+
+    <!-- Enrichment results -->
+    <div class="result flip reveal" style="border:none;padding-bottom:0;">
+      <div>
+        <span class="label label-violet">Task-Specific Enrichment</span>
+        <h3 class="result-title">CASCADE captures distinct transcriptional and receptor-regulatory programmes</h3>
+        <p class="result-body">
+          A clear double dissociation emerged between the two tasks. For specific TH-responsive genes,
+          CASCADE excelled in the treatment task (+0.095 AUROC over DE in treatment-perturbation),
+          while the receptor task was less advantaged. For genes with proximal THR binding sites, gains
+          were confined to receptor-task settings (+0.050 and +0.037 AUROC), confirming that the
+          receptor task recovered a receptor-proximal regulatory programme rather than a generic
+          transcriptional signature.
+          For broad TH-responsive and DN-THRα de-repressed gene sets, CASCADE consistently outperformed
+          DE across all task–perturbation combinations, with AUROC improvements of +0.071 to +0.228
+          and +0.047 to +0.122 respectively. Hit-set enrichment further confirmed these results: at
+          Top-500, Fisher odds ratios reached 8.97–12.27 for CASCADE versus 0.99–2.06 for DE,
+          demonstrating that CASCADE-Explainer captures both broad hormone-responsive programmes and
+          receptor-specific regulatory signals.
+        </p>
+        <div style="display:flex;flex-direction:column;gap:.5rem;">
+          <span class="chip chip-violet">Broad TH-responsive: Δ AUROC +0.071 to +0.228 over DE</span>
+          <span class="chip chip-violet">DN-THRα de-repressed: Δ AUROC +0.047 to +0.122 over DE</span>
+          <span class="chip chip-teal">Top-500 enrichment: odds ratio 8.97–12.27 vs 0.99–2.06 for DE</span>
+        </div>
+      </div>
+      <div class="fig">
+        <img src="figures/thyroid-enrichment.png" alt="Thyroid enrichment and AUROC heatmaps" style="width:100%;border-radius:.75rem;">
+        <div class="fig-cap">
+          <strong>d–e.</strong> Fisher exact odds ratios for broad TH-responsive genes and proximal THR binding sites
+          across tasks and perturbation settings.
+          <strong>f–g.</strong> Full AUROC matrix (CASCADE) and Δ AUROC (CASCADE − DE) across all
+          task–perturbation–reference combinations.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════ TEAM ══════════════════ -->
+<section class="sec sec-alt" id="team">
+  <div class="container">
+    <div class="sec-head reveal" style="text-align:center;">
+      <span class="label label-ink">Authors</span>
+      <h2 class="sec-title">Research Team</h2>
+    </div>
+
+    <div class="team-grid stagger">
+
+      <div class="team-card">
+        <img class="avatar" src="photos/valentina_giunchiglia.png" alt="Valentina Giunchiglia">
+        <div class="team-name">Valentina Giunchiglia</div>
+        <div class="team-affil"><a href="https://www.imperial.ac.uk">Imperial College London</a> &amp; <a href="https://zitniklab.hms.harvard.edu">Harvard University</a></div>
+      </div>
+
+      <div class="team-card">
+        <img class="avatar" src="photos/owenqueen.jpeg" alt="Owen Queen">
+        <div class="team-name">Owen Queen</div>
+        <div class="team-affil"><a href="https://www.stanford.edu">Stanford University</a></div>
+      </div>
+
+      <div class="team-card">
+        <img class="avatar" src="photos/xiang_lin.png" alt="Xiang Lin">
+        <div class="team-name">Xiang Lin</div>
+        <div class="team-affil"><a href="https://zitniklab.hms.harvard.edu">Harvard University</a></div>
+      </div>
+
+      <div class="team-card">
+        <img class="avatar" src="photos/zaneta_matuszek_3010.jpg" alt="Zaneta Matuszek">
+        <div class="team-name">Zaneta Matuszek</div>
+        <div class="team-affil"><a href="https://zitniklab.hms.harvard.edu">Harvard University</a></div>
+      </div>
+
+      <div class="team-card">
+        <img class="avatar" src="photos/hochbaum%20headshot.jpg" alt="Daniel Hochbaum">
+        <div class="team-name">Daniel Hochbaum</div>
+        <div class="team-affil"><a href="https://zitniklab.hms.harvard.edu">Harvard University</a></div>
+      </div>
+
+      <div class="team-card">
+        <img class="avatar" src="photos/michelle_li.png" alt="Michelle Li">
+        <div class="team-name">Michelle Li</div>
+        <div class="team-affil"><a href="https://zitniklab.hms.harvard.edu">Harvard University</a></div>
+      </div>
+
+      <div class="team-card">
+        <img class="avatar" src="photos/aarthi_venkat.png" alt="Aarthi Venkat">
+        <div class="team-name">Aarthi Venkat</div>
+        <div class="team-affil"><a href="https://zitniklab.hms.harvard.edu">Harvard University</a></div>
+      </div>
+
+      <div class="team-card">
+        <img class="avatar" src="photos/gianmarco.jpg" alt="Gianmarco Abbadessa">
+        <div class="team-name">Gianmarco Abbadessa</div>
+        <div class="team-affil">Imperial College London</div>
+      </div>
+
+      <div class="team-card">
+        <img class="avatar" src="photos/walker_rickord.png" alt="Walker Rickord">
+        <div class="team-name">Walker Rickord</div>
+        <div class="team-affil"><a href="https://zitniklab.hms.harvard.edu">Harvard University</a></div>
+      </div>
+
+      <div class="team-card">
+        <img class="avatar" src="photos/richard_nicholas.jpeg" alt="Richard Nicholas">
+        <div class="team-name">Richard Nicholas</div>
+        <div class="team-affil"><a href="https://www.imperial.ac.uk">Imperial College London</a></div>
+      </div>
+
+      <div class="team-card">
+        <img class="avatar" src="photos/arlotta-2-for-website-2024-400x480.jpg" alt="Paola Arlotta">
+        <div class="team-name">Paola Arlotta</div>
+        <div class="team-affil"><a href="https://arlottalab.hms.harvard.edu">Harvard University</a></div>
+      </div>
+
+      <div class="team-card">
+        <img class="avatar" src="photos/marinka_zitnik.png" alt="Marinka Zitnik">
+        <div class="team-name">Marinka Zitnik</div>
+        <div class="team-affil"><a href="https://zitniklab.hms.harvard.edu">Harvard University</a></div>
+      </div>
+
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ CITATION ══════════════════ -->
+<section class="sec sec-dark" id="citation">
+  <div class="container">
+    <div class="sec-head reveal" style="text-align:center;margin-bottom:2.5rem;">
+      <span class="label label-white">Citation</span>
+      <h2 class="sec-title">Cite CASCADE</h2>
+      <p class="sec-lead" style="margin:0 auto;text-align:center;">
+        If you use CASCADE in your research, please cite our paper.
+      </p>
+    </div>
+
+    <div class="cite-box reveal">
+      <div class="cite-head">
+        <span class="cite-lang">BibTeX</span>
+        <button class="cite-copy" onclick="copyCitation(this)">Copy</button>
+      </div>
+      <pre class="cite-body" id="bib-text"><span class="br">@article{</span><span class="v">cascade2026</span>,
+  <span class="k">title</span>   = {<span class="v">TODO — Paper Title</span>},
+  <span class="k">author</span>  = {<span class="v">TODO — Author, First and Author, Second</span>},
+  <span class="k">journal</span> = {<span class="v">TODO — Journal or arXiv</span>},
+  <span class="k">year</span>    = {<span class="v">2026</span>},
+  <span class="k">url</span>     = {<span class="v">https://arxiv.org/abs/TODO</span>}
+<span class="br">}</span></pre>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ FOOTER ══════════════════ -->
+<footer>
+  <div class="container">
+    <p>CASCADE &nbsp;·&nbsp; 2026 &nbsp;·&nbsp; Questions? Open an issue on <a href="#">GitHub</a></p>
+  </div>
+</footer>
+
+<script>
+  // ── Scroll reveal ──────────────────────────────────
+  const els = document.querySelectorAll('.reveal, .stagger');
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+  els.forEach(el => obs.observe(el));
+
+  // ── Copy BibTeX ────────────────────────────────────
+  function copyCitation(btn) {
+    const raw = `@article{cascade2026,
+  title   = {TODO — Paper Title},
+  author  = {TODO — Author, First and Author, Second},
+  journal = {TODO — Journal or arXiv},
+  year    = {2026},
+  url     = {https://arxiv.org/abs/TODO}
+}`;
+    navigator.clipboard.writeText(raw).then(() => {
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy', 2000);
+    });
+  }
+
+  // ── Smooth active nav highlight ────────────────────
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.nav-links a');
+  window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(s => { if (window.scrollY >= s.offsetTop - 100) current = s.id; });
+    navLinks.forEach(a => {
+      a.style.color = a.getAttribute('href') === '#' + current
+        ? 'white' : 'rgba(255,255,255,0.6)';
+    });
+  }, { passive: true });
+</script>
+</body>
+</html>
